@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"loggenerator/parser"
+	"loggenerator/segmenter"
 )
 
 // func main() {
@@ -21,10 +21,25 @@ import (
 
 // }
 
+// func main() {
+// 	entries, _ := parser.LogParseFiles("../logs")
+// 	for _, entry := range entries {
+// 		fmt.Println(entry)
+// 	}
+// 	fmt.Println(len(entries))
+// }
+
 func main() {
-	entries, _ := parser.LogParseFiles("../logs")
-	for _, entry := range entries {
-		fmt.Println(entry)
+
+	logStore, _ := segmenter.ParseLogSegments("../logs")
+	segment := logStore.Segment[0]
+	fmt.Printf("File Name: %s\n", segment.FileName)
+	fmt.Printf("Start Time: %v\n", segment.StartTime)
+	fmt.Printf("End Time: %v\n", segment.EndTime)
+	fmt.Printf("Number of Log Entries: %d\n", len(segment.LogEntries))
+
+	fmt.Println("\n--- Log Entries ---")
+	for _, entry := range segment.LogEntries {
+		fmt.Printf("[%s] | %s | %s| %s | %s\n", entry.Level, entry.Component, entry.Host, entry.Requestid, entry.Message)
 	}
-	fmt.Println(len(entries))
 }
