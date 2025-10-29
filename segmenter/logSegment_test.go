@@ -48,6 +48,21 @@ func TestParseLogSegments(t *testing.T) {
 	if segment.StartTime.After(segment.EndTime) {
 		t.Errorf("StartTime %v should not be after EndTime %v", segment.StartTime, segment.EndTime)
 	}
+	if len(segment.Index.ByLevel["INFO"]) == 0 || len(segment.Index.ByLevel["ERROR"]) == 0 {
+		t.Errorf("Expected indexes for INFO and ERROR levels")
+	}
+
+	if len(segment.Index.ByComponent["auth"]) == 0 || len(segment.Index.ByComponent["database"]) == 0 {
+		t.Errorf("Expected indexes for auth and database components")
+	}
+
+	if len(segment.Index.ByHost["db01"]) == 0 || len(segment.Index.ByHost["server2"]) == 0 {
+		t.Errorf("Expected indexes for both hosts")
+	}
+
+	if len(segment.Index.ByReqId["req-001"]) == 0 || len(segment.Index.ByReqId["req2"]) == 0 {
+		t.Errorf("Expected indexes for both request IDs")
+	}
 }
 
 func TestParseLogSegments_BadDir(t *testing.T) {

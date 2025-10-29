@@ -3,6 +3,7 @@ package segmenter
 import (
 	"bufio"
 	"fmt"
+	"loggenerator/indexer"
 	"loggenerator/model"
 	"loggenerator/parser"
 	"os"
@@ -42,11 +43,13 @@ func ParseLogSegments(s string) (model.LogStore, error) {
 		if len(LogEntries) == 0 {
 			continue
 		}
+		index := indexer.BuildSegmentIndex(LogEntries)
 		segment := model.Segment{
 			FileName:   file.Name(),
 			LogEntries: LogEntries,
 			StartTime:  LogEntries[0].Time,
 			EndTime:    LogEntries[len(LogEntries)-1].Time,
+			Index:      index,
 		}
 		LogStore.Segment = append(LogStore.Segment, segment)
 	}
