@@ -1,81 +1,64 @@
 package main
 
 import (
+	"flag"
 	"fmt"
-	"log"
+	"log/slog"
+	"loggenerator/filter"
 	"loggenerator/segmenter"
+	"strings"
+	"time"
 )
 
-// func main() {
-// 	logLine := `2025-10-23 15:04:10.001 | DEBUG | auth | host=db01 | request_id=req-hyx6sa-8587 | msg="2FA verification completed"`
-
-// 	entry, err := parser.LogParseEntry(logLine)
-// 	if err != nil {
-// 		log.Fatal("Error:", err)
-// 	}
-// 	fmt.Println("Time:", entry.Time.Format("2006-01-02 15:04:05.000"))
-// 	fmt.Println("Level:", entry.Level)
-// 	fmt.Println("Component:", entry.Component)
-// 	fmt.Println("Host:", entry.Host)
-// 	fmt.Println("Request ID:", entry.Requestid)
-// 	fmt.Println("Message:", entry.Message)
-
-// }
-
-// func main() {
-// 	entries, _ := parser.LogParseFiles("../logs")
-// 	for _, entry := range entries {
-// 		fmt.Println(entry)
-// 	}
-// 	fmt.Println(len(entries))
-// }
-
-// func main() {
-
-// 	logStore, _ := segmenter.ParseLogSegments("../logs")
-// 	segment := logStore.Segment[0]
-// 	fmt.Printf("File Name: %s\n", segment.FileName)
-// 	fmt.Printf("Start Time: %v\n", segment.StartTime)
-// 	fmt.Printf("End Time: %v\n", segment.EndTime)
-// 	fmt.Printf("Number of Log Entries: %d\n", len(segment.LogEntries))
-
-// 	fmt.Println("\n--- Log Entries ---")
-// 	for _, entry := range segment.LogEntries {
-// 		fmt.Printf("[%s] | %s | %s| %s | %s\n", entry.Level, entry.Component, entry.Host, entry.Requestid, entry.Message)
-// 	}
-// }
-
 func main() {
+	level := flag.String("level", "", "Filter by log level")
+	component := flag.String("component", "", "Filter by component")
+	host := flag.String("host", "", "Filter by host")
+	reqID := flag.String("reqID", "", "Filter by requestID")
+	startTimeStr := flag.String("start", "", "Filter logs from this start time (YYYY-MM-DD HH:MM:SS)")
+	endTimestr := flag.String("end", "", "Filter logs up to this end time (YYYY-MM-DD HH:MM:SS)")
+
+	flag.Parse()
+
+	var startTime, endTime time.Time
+	var err error
+
+	if *startTimeStr != "" {
+		startTime, err = time.Parse("2006-01-02 15:04:05", *startTimeStr)
+		if err != nil {
+			slog.Error("Error parsing time: ", "error", err)
+		}
+	}
+
+	if *endTimestr != "" {
+		endTime, err = time.Parse("2006-01-02 15:04:05", *endTimestr)
+		if err != nil {
+			slog.Error("Error parsing time: ", "error", err)
+		}
+	}
+
 	logStore, err := segmenter.ParseLogSegments("../logs")
 	if err != nil {
-		log.Fatalf("Error parsing log segments: %v", err)
+		slog.Error("Failed to parse logs\n")
 	}
-
-	if len(logStore.Segment) == 0 {
-		fmt.Println("No log segments found.")
-		return
+	split := func(s string) []string {
+		if s == "" {
+			return nil
+		}
+		parts := strings.Split(s, ",")
+		for i := range parts {
+			parts[i] = strings.TrimSpace(parts[i])
+		}
+		return parts
 	}
-	segment := logStore.Segment[0]
+	levels := split(*level)
+	components := split(*component)
+	hosts := split(*host)
+	reqIDs := split(*reqID)
 
-	fmt.Println("\n========= Index Summary =========")
-
-	fmt.Println("\nBy Level:")
-	for level, indices := range segment.Index.ByLevel {
-		fmt.Printf("  %s → %v\n", level, indices)
-	}
-
-	fmt.Println("\nBy Component:")
-	for comp, indices := range segment.Index.ByComponent {
-		fmt.Printf("  %s → %v\n", comp, indices)
-	}
-
-	fmt.Println("\nBy Host:")
-	for host, indices := range segment.Index.ByHost {
-		fmt.Printf("  %s → %v\n", host, indices)
-	}
-
-	fmt.Println("\nBy Request ID:")
-	for req, indices := range segment.Index.ByReqId {
-		fmt.Printf("  %s → %v\n", req, indices)
+	filteredLogs := filter.FilterLogs(logStore, levels, components, hosts, reqIDs, startTime, endTime)
+	fmt.Printf("Found %d matching entries\n", len(filteredLogs))
+	for _, entry := range filteredLogs {
+		fmt.Println(entry.Raw)
 	}
 }
