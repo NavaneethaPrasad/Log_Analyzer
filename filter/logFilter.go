@@ -1,7 +1,9 @@
 package filter
 
 import (
+	"fmt"
 	"loggenerator/model"
+	"sync"
 	"time"
 )
 
@@ -9,87 +11,105 @@ func FilterLogs(
 	store model.LogStore,
 	levels, components, hosts, reqIDs []string, startTime time.Time, endTime time.Time,
 ) []model.LogEntry {
+	start := time.Now()
 	var result []model.LogEntry
+	var mu sync.Mutex
+	var wg sync.WaitGroup
 
 	for _, segment := range store.Segment {
-		totalFilters := 0
+		seg := segment
+		wg.Add(1)
+		go func(seg model.Segment) {
+			defer wg.Done()
 
-		if !startTime.IsZero() && segment.EndTime.Before(startTime) {
-			continue
-		}
-		if !endTime.IsZero() && segment.StartTime.After(endTime) {
-			continue
-		}
+			totalFilters := 0
 
-		matchedIndex := make(map[int]bool)
-
-		if len(levels) > 0 {
-			totalFilters++
-			for _, level := range levels {
-				for _, idx := range segment.Index.ByLevel[level] {
-					matchedIndex[idx] = true
-				}
+			if !startTime.IsZero() && segment.EndTime.Before(startTime) {
+				return
 			}
-		}
+			if !endTime.IsZero() && segment.StartTime.After(endTime) {
+				return
+			}
 
-		if len(components) > 0 {
-			totalFilters++
-			componentFilter := make(map[int]bool)
-			for _, component := range components {
-				for _, idx := range segment.Index.ByComponent[component] {
-					if matchedIndex[idx] || len(matchedIndex) == 0 {
-						componentFilter[idx] = true
+			matchedIndex := make(map[int]bool)
+
+			if len(levels) > 0 {
+				totalFilters++
+				for _, level := range levels {
+					for _, idx := range segment.Index.ByLevel[level] {
+						matchedIndex[idx] = true
 					}
 				}
 			}
-			matchedIndex = componentFilter
-		}
 
-		if len(hosts) > 0 {
-			totalFilters++
-			hostFilter := make(map[int]bool)
-			for _, host := range hosts {
-				for _, idx := range segment.Index.ByHost[host] {
-					if matchedIndex[idx] || len(matchedIndex) == 0 {
-						hostFilter[idx] = true
+			if len(components) > 0 {
+				totalFilters++
+				componentFilter := make(map[int]bool)
+				for _, component := range components {
+					for _, idx := range segment.Index.ByComponent[component] {
+						if matchedIndex[idx] || len(matchedIndex) == 0 {
+							componentFilter[idx] = true
+						}
 					}
 				}
+				matchedIndex = componentFilter
 			}
-			matchedIndex = hostFilter
-		}
 
-		if len(reqIDs) > 0 {
-			totalFilters++
-			requestFilter := make(map[int]bool)
-			for _, reqID := range reqIDs {
-				for _, idx := range segment.Index.ByReqId[reqID] {
-					if matchedIndex[idx] || len(matchedIndex) == 0 {
-						requestFilter[idx] = true
+			if len(hosts) > 0 {
+				totalFilters++
+				hostFilter := make(map[int]bool)
+				for _, host := range hosts {
+					for _, idx := range segment.Index.ByHost[host] {
+						if matchedIndex[idx] || len(matchedIndex) == 0 {
+							hostFilter[idx] = true
+						}
 					}
 				}
+				matchedIndex = hostFilter
 			}
-			matchedIndex = requestFilter
-		}
 
-		if totalFilters == 0 {
-			for _, entry := range segment.LogEntries {
+			if len(reqIDs) > 0 {
+				totalFilters++
+				requestFilter := make(map[int]bool)
+				for _, reqID := range reqIDs {
+					for _, idx := range segment.Index.ByReqId[reqID] {
+						if matchedIndex[idx] || len(matchedIndex) == 0 {
+							requestFilter[idx] = true
+						}
+					}
+				}
+				matchedIndex = requestFilter
+			}
+
+			var localResults []model.LogEntry
+
+			if totalFilters == 0 {
+				for _, entry := range segment.LogEntries {
+					if !isWithinTimeRange(entry.Time, startTime, endTime) {
+						return
+					}
+					localResults = append(localResults, entry)
+				}
+				return
+			}
+
+			for idx := range matchedIndex {
+				entry := segment.LogEntries[idx]
 				if !isWithinTimeRange(entry.Time, startTime, endTime) {
 					continue
 				}
-				result = append(result, entry)
+				localResults = append(localResults, entry)
 			}
-			continue
-		}
 
-		for idx := range matchedIndex {
-			entry := segment.LogEntries[idx]
-			if !isWithinTimeRange(entry.Time, startTime, endTime) {
-				continue
-			}
-			result = append(result, entry)
-		}
+			mu.Lock()
+			result = append(result, localResults...)
+			mu.Unlock()
+		}(seg)
 	}
+	wg.Wait()
 
+	elapsed := time.Since(start)
+	fmt.Println("Filtering took:", elapsed)
 	return result
 }
 
