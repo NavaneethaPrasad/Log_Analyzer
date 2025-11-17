@@ -386,3 +386,21 @@ func SplitUserFilter(input string) []string {
 
 	return parts
 }
+
+func GetAllLevels(db *gorm.DB) ([]LogLevel, error) {
+	var levels []LogLevel
+	err := db.Find(&levels).Error
+	return levels, err
+}
+
+func GetAllComponents(db *gorm.DB) ([]LogComponent, error) {
+	var comps []LogComponent
+	err := db.Find(&comps).Error
+	return comps, err
+}
+
+func GetAllHosts(db *gorm.DB) ([]LogHost, error) {
+	var hosts []LogHost
+	err := db.Find(&hosts).Error
+	return hosts, err
+}
