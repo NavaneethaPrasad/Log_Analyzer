@@ -1,0 +1,23 @@
+mode: set
+loggenerator/parser/logParse.go:13.55,17.20 4 1
+loggenerator/parser/logParse.go:17.20,19.3 1 1
+loggenerator/parser/logParse.go:20.2,21.40 2 1
+loggenerator/parser/logParse.go:21.40,22.17 1 1
+loggenerator/parser/logParse.go:22.17,24.4 1 1
+loggenerator/parser/logParse.go:27.2,28.16 2 1
+loggenerator/parser/logParse.go:28.16,30.3 1 1
+loggenerator/parser/logParse.go:31.2,40.20 2 1
+loggenerator/parser/logParse.go:43.56,46.16 3 1
+loggenerator/parser/logParse.go:46.16,48.3 1 1
+loggenerator/parser/logParse.go:49.2,49.29 1 1
+loggenerator/parser/logParse.go:49.29,50.19 1 1
+loggenerator/parser/logParse.go:50.19,51.12 1 1
+loggenerator/parser/logParse.go:53.3,55.17 3 1
+loggenerator/parser/logParse.go:55.17,57.12 2 1
+loggenerator/parser/logParse.go:59.3,62.22 3 1
+loggenerator/parser/logParse.go:62.22,65.18 3 1
+loggenerator/parser/logParse.go:65.18,67.5 1 1
+loggenerator/parser/logParse.go:69.3,70.17 2 1
+loggenerator/parser/logParse.go:70.17,72.4 1 0
+loggenerator/parser/logParse.go:73.3,73.12 1 1
+loggenerator/parser/logParse.go:76.2,76.24 1 1

@@ -3,9 +3,9 @@ package segmenter
 import (
 	"bufio"
 	"fmt"
-	"loggenerator/indexer"
 	"loggenerator/model"
-	"loggenerator/parser"
+	"loggenerator/pkg/indexer"
+	"loggenerator/pkg/parser"
 	"os"
 	"path/filepath"
 	"sync"

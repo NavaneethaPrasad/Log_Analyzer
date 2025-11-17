@@ -5,7 +5,7 @@ import (
 	"flag"
 	"log/slog"
 	"loggenerator/database"
-	"loggenerator/segmenter"
+	"loggenerator/pkg/segmenter"
 	"os"
 
 	"github.com/jackc/pgx/v5"

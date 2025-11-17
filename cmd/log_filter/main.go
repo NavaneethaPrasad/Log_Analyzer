@@ -5,8 +5,8 @@ import (
 	"flag"
 	"fmt"
 	"log/slog"
-	"loggenerator/filter"
 	"loggenerator/model"
+	"loggenerator/pkg/filter"
 	"os"
 )
 
