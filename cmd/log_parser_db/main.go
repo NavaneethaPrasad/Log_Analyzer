@@ -56,10 +56,13 @@ func handleCommand(args []string) error {
 
 	case "web":
 		r := gin.Default()
-		r.LoadHTMLGlob("pkg/gin/templates/*")
 		ginhandler.DBRef = db
-		ginhandler.SetupRoutes(r)
+
+		ginhandler.SetupRoutes(r)             // SetFuncMap + routes
+		r.LoadHTMLGlob("pkg/gin/templates/*") // Load templates AFTER SetFuncMap
+
 		r.Run(":8080")
+
 	default:
 		return fmt.Errorf("unknown command: %s (expected: init | add | query)", args[0])
 

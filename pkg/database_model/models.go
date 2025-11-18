@@ -386,21 +386,47 @@ func SplitUserFilter(input string) []string {
 
 	return parts
 }
-
-func GetAllLevels(db *gorm.DB) ([]LogLevel, error) {
-	var levels []LogLevel
-	err := db.Find(&levels).Error
-	return levels, err
+func GetAllLogs(db *gorm.DB) ([]Entry, error) {
+	var result []Entry
+	err := db.Preload("Level").
+		Preload("Component").
+		Preload("Host").
+		Find(&result).Error
+	return result, err
 }
+func FilterLogs(db *gorm.DB, levels, components, hosts []string, requestID, timestampCond string) ([]Entry, error) {
+	var queries []string
 
-func GetAllComponents(db *gorm.DB) ([]LogComponent, error) {
-	var comps []LogComponent
-	err := db.Find(&comps).Error
-	return comps, err
-}
+	// Levels
+	if len(levels) > 0 && len(levels) < 4 { // skip if all selected
+		queries = append(queries, "level="+strings.Join(levels, "|"))
+	}
 
-func GetAllHosts(db *gorm.DB) ([]LogHost, error) {
-	var hosts []LogHost
-	err := db.Find(&hosts).Error
-	return hosts, err
+	// Components
+	if len(components) > 0 && len(components) < 5 {
+		queries = append(queries, "component="+strings.Join(components, "|"))
+	}
+
+	// Hosts
+	if len(hosts) > 0 && len(hosts) < 5 {
+		queries = append(queries, "host="+strings.Join(hosts, "|"))
+	}
+
+	// RequestID filter (direct equality)
+	if strings.TrimSpace(requestID) != "" {
+		queries = append(queries, "request_id="+requestID)
+	}
+
+	// Timestamp filter (operator + value)
+	if strings.TrimSpace(timestampCond) != "" {
+		queries = append(queries, "time_stamp "+timestampCond)
+	}
+
+	// If no filters, return all logs
+	if len(queries) == 0 {
+		return GetAllLogs(db)
+	}
+
+	// Call existing QueryDB which takes []string
+	return Query(db, queries)
 }

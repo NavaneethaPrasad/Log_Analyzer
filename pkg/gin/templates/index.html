@@ -1,4 +1,4 @@
-	<!DOCTYPE html>
+<!DOCTYPE html>
 <html>
 <head>
     <title>Log Search</title>
@@ -14,34 +14,70 @@
             margin-bottom: 20px;
         }
 
-        /* Center form */
-        .search-container {
+        /* Main form container */
+        .form-box {
+            max-width: 900px;
+            background: #ffffff;
+            padding: 20px;
+            margin: 0 auto 25px auto;
+            border-radius: 10px;
+            border: 1px solid #ccc;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 6px;
+            font-size: 15px;
+        }
+
+        .checkbox-group {
             display: flex;
-            justify-content: center;
-            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 12px;
         }
 
-        /* Input box styling */
-        .search-input {
-            width: 450px;
+        .checkbox-group label {
+            padding: 6px 12px;
+            cursor: pointer;
+        }
+
+        .text-input {
+            width: 100%;
             padding: 10px;
-            font-size: 16px;
+            font-size: 14px;
             border: 2px solid #ccc;
-            border-radius: 6px;
-            margin-right: 10px;
+            border-radius: 8px;
+            box-sizing: border-box;
         }
 
-        /* Button styling */
-        .search-btn {
-            padding: 10px 18px;
+        /* Center Search button */
+        .submit-container {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .submit-btn {
+            padding: 10px 22px;
             font-size: 16px;
             background-color: #a8293a;
             color: white;
             border: none;
-            border-radius: 6px;
+            border-radius: 8px;
             cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
         }
-        /* Error message */
+
+        .submit-btn:hover {
+            background-color: #8c1f2e;
+        }
+
+        /* Error */
         .error {
             text-align: center;
             color: red;
@@ -65,7 +101,6 @@
             padding: 10px;
             border-bottom: 1px solid #eee;
         }
-
     </style>
 </head>
 
@@ -73,12 +108,60 @@
 
 <h2>Search Logs</h2>
 
-<div class="search-container">
-    <form method="POST" action="/search">
-        <input class="search-input" type="text" name="filter" placeholder="Enter query...">
-        <button class="search-btn" type="submit">Search</button>
-    </form>
-</div>
+<form method="POST" action="/search" class="form-box">
+
+    <!-- Level -->
+    <div class="form-group">
+        <label class="form-label">Level:</label>
+        <div class="checkbox-group">
+            <label><input type="checkbox" name="level" value="INFO"  {{ if (contains .Level "INFO") }}checked{{ end }}> INFO</label>
+            <label><input type="checkbox" name="level" value="WARN"  {{ if (contains .Level "WARN") }}checked{{ end }}> WARN</label>
+            <label><input type="checkbox" name="level" value="ERROR" {{ if (contains .Level "ERROR") }}checked{{ end }}> ERROR</label>
+            <label><input type="checkbox" name="level" value="DEBUG" {{ if (contains .Level "DEBUG") }}checked{{ end }}> DEBUG</label>
+        </div>
+    </div>
+
+    <!-- Component -->
+    <div class="form-group">
+        <label class="form-label">Component:</label>
+        <div class="checkbox-group">
+            <label><input type="checkbox" name="component" value="api-server" {{ if (contains .Component "api-server") }}checked{{ end }}> api-server</label>
+            <label><input type="checkbox" name="component" value="database" {{ if (contains .Component "database") }}checked{{ end }}> database</label>
+            <label><input type="checkbox" name="component" value="cache"     {{ if (contains .Component "cache") }}checked{{ end }}> cache</label>
+            <label><input type="checkbox" name="component" value="worker"    {{ if (contains .Component "worker") }}checked{{ end }}> worker</label>
+            <label><input type="checkbox" name="component" value="auth"      {{ if (contains .Component "auth") }}checked{{ end }}> auth</label>
+        </div>
+    </div>
+
+    <!-- Host -->
+    <div class="form-group">
+        <label class="form-label">Host:</label>
+        <div class="checkbox-group">
+            <label><input type="checkbox" name="host" value="web01"    {{ if (contains .Host "web01") }}checked{{ end }}> web01</label>
+            <label><input type="checkbox" name="host" value="web02"    {{ if (contains .Host "web02") }}checked{{ end }}> web02</label>
+            <label><input type="checkbox" name="host" value="cache01"  {{ if (contains .Host "cache01") }}checked{{ end }}> cache01</label>
+            <label><input type="checkbox" name="host" value="worker01" {{ if (contains .Host "worker01") }}checked{{ end }}> worker01</label>
+            <label><input type="checkbox" name="host" value="db01"     {{ if (contains .Host "db01") }}checked{{ end }}> db01</label>
+        </div>
+    </div>
+
+    <!-- Request ID -->
+    <div class="form-group">
+        <label class="form-label">Request ID:</label>
+        <input type="text" class="text-input" name="request_id" value="{{ .RequestID }}" placeholder="Request ID">
+    </div>
+
+    <!-- Timestamp -->
+    <div class="form-group">
+        <label class="form-label">Timestamp:</label>
+        <input type="text" class="text-input" name="timestamp" value="{{ .Timestamp }}" placeholder=">2025-11-17 10:00:00">
+    </div>
+
+    <!-- Centered search button -->
+    <div class="submit-container">
+        <button type="submit" class="submit-btn">Search</button>
+    </div>
+</form>
 
 {{ if .Error }}
     <p class="error">{{ .Error }}</p>
@@ -99,7 +182,6 @@
     </div>
     {{ end }}
 </div>
-
 {{ end }}
 
 </body>
