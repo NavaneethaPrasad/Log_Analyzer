@@ -55,11 +55,14 @@ func handleCommand(args []string) error {
 		return nil
 
 	case "web":
-		r := gin.Default()
 		ginhandler.DBRef = db
 
-		ginhandler.SetupRoutes(r)             // SetFuncMap + routes
+		r := gin.Default()
+		r.Use(ginhandler.CORSMiddleware())
+
 		r.LoadHTMLGlob("pkg/gin/templates/*") // Load templates AFTER SetFuncMap
+
+		ginhandler.SetupRoutes(r) // SetFuncMap + routes
 
 		r.Run(":8080")
 

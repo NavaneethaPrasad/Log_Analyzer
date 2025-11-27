@@ -1,14 +1,13 @@
 package ginhandler
 
 import (
+	"fmt"
 	databasemodel "loggenerator/pkg/database_model"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 )
-
-var DBRef *gorm.DB
 
 func ShowFilterPage(c *gin.Context) {
 	c.HTML(http.StatusOK, "index.html", gin.H{
@@ -20,65 +19,122 @@ func ShowFilterPage(c *gin.Context) {
 	})
 }
 
-// func RunFilter(c *gin.Context) {
-// 	rawFilter := c.PostForm("filter")
-
-// 	if strings.TrimSpace(rawFilter) == "" {
-// 		c.HTML(http.StatusOK, "index.html", gin.H{
-// 			"Error": "Filter cannot be empty",
-// 		})
-// 		return
-// 	}
-
-// 	parts := databasemodel.SplitUserFilter(rawFilter)
-
-// 	entries, err := databasemodel.Query(DBRef, parts)
-
-// 	if err != nil {
-// 		c.HTML(http.StatusOK, "index.html", gin.H{
-// 			"Error": err.Error(),
-// 		})
-// 		return
-// 	}
-
-// 	// render same page but with results
-// 	c.HTML(http.StatusOK, "index.html", gin.H{
-// 		"Entries": entries,
-// 	})
-// }
-
 func RunFilter(c *gin.Context) {
 
-	// Multi-select checkboxes
 	levels := c.PostFormArray("level")
 	components := c.PostFormArray("component")
 	hosts := c.PostFormArray("host")
 
-	// Textboxes
 	requestID := c.PostForm("request_id")
-	timestamp := c.PostForm("timestamp") // e.g., "> 2025-11-17 10:00:00"
+	timestamp := c.PostForm("timestamp")
 
-	// Call database function
 	entries, err := databasemodel.FilterLogs(DBRef, levels, components, hosts, requestID, timestamp)
+
+	// if c.GetHeader("X-Requested-With") == "XMLHttpRequest" {
+
 	if err != nil {
-		c.HTML(http.StatusOK, "index.html", gin.H{
-			"Error":     err.Error(),
-			"Level":     levels,
-			"Component": components,
-			"Host":      hosts,
-			"RequestID": requestID,
-			"Timestamp": timestamp,
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
 		})
 		return
 	}
 
-	c.HTML(http.StatusOK, "index.html", gin.H{
-		"Entries":   entries,
-		"Count":     len(entries),
-		"Level":     levels,
-		"Component": components,
-		"Host":      hosts,
-		"RequestID": requestID,
-		"Timestamp": timestamp,
+	c.JSON(http.StatusOK, gin.H{
+		"entries": entries,
+		"count":   len(entries),
+	})
+}
+
+// 	return
+// // }
+
+// 	if err != nil {
+// 		c.HTML(http.StatusOK, "index.html", gin.H{
+// 			"Error":     err.Error(),
+// 			"Level":     levels,
+// 			"Component": components,
+// 			"Host":      hosts,
+// 			"RequestID": requestID,
+// 			"Timestamp": timestamp,
+// 		})
+// 		return
+// 	}
+
+//	c.HTML(http.StatusOK, "index.html", gin.H{
+//		"Entries":   entries,
+//		"Count":     len(entries),
+//		"Level":     levels,
+//		"Component": components,
+//		"Host":      hosts,
+//		"RequestID": requestID,
+//		"Timestamp": timestamp,
+//	})
+
+func ShowAllLogs(c *gin.Context) {
+	entries, err := databasemodel.GetAllLogs(DBRef) //empty filter to get all logs
+	if err != nil {
+		c.JSON(500, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(200, gin.H{
+		"entries": entries[1:10000],
+	})
+}
+func PaginatedfilterLogs(c *gin.Context) {
+	// 1. Read pagination
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "0"))
+	pageSize, _ := strconv.Atoi(c.DefaultQuery("pageSize", "100"))
+	offset := page * pageSize
+
+	// 2. Read JSON body EXACTLY matching frontend keys
+	var body struct {
+		Level     []string `json:"level"`
+		Component []string `json:"component"`
+		Host      []string `json:"host"`
+		RequestId string   `json:"requestId"`
+		Timestamp string   `json:"timestamp"`
+	}
+
+	if err := c.ShouldBindJSON(&body); err != nil {
+		fmt.Println("JSON BIND ERROR:", err)
+		c.JSON(400, gin.H{"error": "Invalid JSON"})
+		return
+	}
+
+	entries, err := databasemodel.FilterLogs(
+		DBRef,
+		body.Level,
+		body.Component,
+		body.Host,
+		body.RequestId,
+		body.Timestamp,
+	)
+
+	if err != nil {
+		fmt.Println("DB FILTER ERROR:", err)
+		c.JSON(500, gin.H{"error": err.Error()})
+		return
+	}
+
+	total := len(entries)
+
+	// 4. Manual pagination
+	start := offset
+	end := offset + pageSize
+
+	if start > total {
+		start = total
+	}
+	if end > total {
+		end = total
+	}
+
+	pageEntries := entries[start:end]
+
+	// 5. Return paginated response
+	c.JSON(200, gin.H{
+		"entries": pageEntries,
+		"count":   total,
 	})
 }
