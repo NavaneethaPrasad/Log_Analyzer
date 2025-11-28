@@ -19,31 +19,31 @@ func ShowFilterPage(c *gin.Context) {
 	})
 }
 
-func RunFilter(c *gin.Context) {
+// func RunFilter(c *gin.Context) {
 
-	levels := c.PostFormArray("level")
-	components := c.PostFormArray("component")
-	hosts := c.PostFormArray("host")
+// 	levels := c.PostFormArray("level")
+// 	components := c.PostFormArray("component")
+// 	hosts := c.PostFormArray("host")
 
-	requestID := c.PostForm("request_id")
-	timestamp := c.PostForm("timestamp")
+// 	requestID := c.PostForm("request_id")
+// 	timestamp := c.PostForm("timestamp")
 
-	entries, err := databasemodel.FilterLogs(DBRef, levels, components, hosts, requestID, timestamp)
+// 	entries, err := databasemodel.FilterLogs(DBRef, levels, components, hosts, requestID, timestamp)
 
-	// if c.GetHeader("X-Requested-With") == "XMLHttpRequest" {
+// 	// if c.GetHeader("X-Requested-With") == "XMLHttpRequest" {
 
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
-		})
-		return
-	}
+// 	if err != nil {
+// 		c.JSON(http.StatusBadRequest, gin.H{
+// 			"error": err.Error(),
+// 		})
+// 		return
+// 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"entries": entries,
-		"count":   len(entries),
-	})
-}
+// 	c.JSON(http.StatusOK, gin.H{
+// 		"entries": entries,
+// 		"count":   len(entries),
+// 	})
+// }
 
 // 	return
 // // }
@@ -93,7 +93,8 @@ func PaginatedfilterLogs(c *gin.Context) {
 		Component []string `json:"component"`
 		Host      []string `json:"host"`
 		RequestId string   `json:"requestId"`
-		Timestamp string   `json:"timestamp"`
+		StartTime string   `json:"startTime"`
+		EndTime   string   `json:"endTime"`
 	}
 
 	if err := c.ShouldBindJSON(&body); err != nil {
@@ -108,7 +109,8 @@ func PaginatedfilterLogs(c *gin.Context) {
 		body.Component,
 		body.Host,
 		body.RequestId,
-		body.Timestamp,
+		body.StartTime,
+		body.EndTime,
 	)
 
 	if err != nil {
