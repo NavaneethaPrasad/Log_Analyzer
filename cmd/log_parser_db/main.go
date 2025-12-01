@@ -11,7 +11,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// const dbUrl = "postgresql:///log_Analyzer?host=/var/run/postgresql/"
 const dbUrl = "postgresql:///log_analyzer_db?host=/var/run/postgresql/"
 
 func handleCommand(args []string) error {
@@ -26,7 +25,7 @@ func handleCommand(args []string) error {
 			return err
 		}
 	case "add":
-		dirpath := args[1] // TBD : Handle case where no filename specified
+		dirpath := args[1]
 		if dirpath == "" {
 			slog.Error("Specify directory!")
 		}
@@ -42,7 +41,6 @@ func handleCommand(args []string) error {
 	case "query":
 		query := args[1:]
 		fmt.Println(query)
-		// query := strings.Join(args[1:], " ")
 		entries, err := databasemodel.Query(db, query)
 		if err != nil {
 			return err

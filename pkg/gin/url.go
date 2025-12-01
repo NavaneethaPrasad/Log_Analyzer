@@ -25,9 +25,6 @@ func SetupRoutes(r *gin.Engine) {
 
 	// Register routes
 	r.POST("/api/logs", PaginatedfilterLogs)
-	// r.GET("/api/log", PaginatedLogs)
-	// r.GET("/filter", ShowFilterPage)
-	// r.POST("/search", RunFilter)
 }
 
 func PrintHelloWorldBeforeRouting(ctx *gin.Context) {

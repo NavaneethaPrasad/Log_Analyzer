@@ -19,57 +19,6 @@ func ShowFilterPage(c *gin.Context) {
 	})
 }
 
-// func RunFilter(c *gin.Context) {
-
-// 	levels := c.PostFormArray("level")
-// 	components := c.PostFormArray("component")
-// 	hosts := c.PostFormArray("host")
-
-// 	requestID := c.PostForm("request_id")
-// 	timestamp := c.PostForm("timestamp")
-
-// 	entries, err := databasemodel.FilterLogs(DBRef, levels, components, hosts, requestID, timestamp)
-
-// 	// if c.GetHeader("X-Requested-With") == "XMLHttpRequest" {
-
-// 	if err != nil {
-// 		c.JSON(http.StatusBadRequest, gin.H{
-// 			"error": err.Error(),
-// 		})
-// 		return
-// 	}
-
-// 	c.JSON(http.StatusOK, gin.H{
-// 		"entries": entries,
-// 		"count":   len(entries),
-// 	})
-// }
-
-// 	return
-// // }
-
-// 	if err != nil {
-// 		c.HTML(http.StatusOK, "index.html", gin.H{
-// 			"Error":     err.Error(),
-// 			"Level":     levels,
-// 			"Component": components,
-// 			"Host":      hosts,
-// 			"RequestID": requestID,
-// 			"Timestamp": timestamp,
-// 		})
-// 		return
-// 	}
-
-//	c.HTML(http.StatusOK, "index.html", gin.H{
-//		"Entries":   entries,
-//		"Count":     len(entries),
-//		"Level":     levels,
-//		"Component": components,
-//		"Host":      hosts,
-//		"RequestID": requestID,
-//		"Timestamp": timestamp,
-//	})
-
 func ShowAllLogs(c *gin.Context) {
 	entries, err := databasemodel.GetAllLogs(DBRef) //empty filter to get all logs
 	if err != nil {
